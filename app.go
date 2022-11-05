@@ -1,41 +1,53 @@
 package main
 
 import (
-	"fmt"
+	"api/blacklist"
+	"api/offers"
+	"api/queue"
+	rooms "api/rooms"
+	"api/shortener"
 
-	"github.com/jaavier/sider"
 	"github.com/labstack/echo/v4"
 )
 
 var server = echo.New()
 
-// /etc/letsencrypt/csr
-
+const MAX_FREE = 2
+const MAX_VALUE_LENGTH_FREE = 40
+const MAX_PASSWORD_LENGTH_FREE = 64
+const MAX_KEY_LENGTH_FREE = 40
+const MAX_RETRIES_FREE = 5
 
 func main() {
-	fmt.Println("Hola Mundo!")
 	server.GET("/", func(c echo.Context) error {
 		return c.String(200, "Hello Gopher!")
 	})
 
-	server.GET("/expire/:key/:value/:ttl", func(c echo.Context) error {
-		key := c.Param("key")
-		value := c.Param("value")
-		ttl := c.Param("ttl")
-		sider.Set(key, value)
-		return c.String(200, fmt.Sprintf("Hello %s Adding key and expire: %s, %s at %s",
-			c.RealIP(),
-			key, value, ttl))
+	server.GET("/sha256/:text", func(c echo.Context) error {
+		var text string = c.Param("text")
+		return c.String(200, generateSha256(text))
 	})
 
-	server.GET("/get-key/:key", func(c echo.Context) error {
-		key := c.Param("key")
-		if content, err := sider.Get(key); err != nil {
-			return c.String(400, "Key not found.")
-		} else {
-			return c.String(200, content)
-		}
-	})
+	server.GET("/blacklist", blacklist.Get)
+	server.POST("/blacklist", blacklist.Post)
+	server.DELETE("/blacklist", blacklist.Delete)
+
+	server.GET("/rooms", rooms.Get)
+	server.POST("/rooms", rooms.Post)
+	server.DELETE("/rooms", rooms.Delete)
+
+	server.GET("/offers", offers.Get)
+	server.POST("/offers", offers.Post)
+	server.DELETE("/offers", offers.Delete)
+
+	server.GET("/queue", queue.Get)
+	server.POST("/queue", queue.Post)
+	server.DELETE("/queue", queue.Delete)
+
+	server.GET("/shortener", shortener.Get)
+	server.POST("/shortener", shortener.Post)
+	server.DELETE("/shortener", shortener.Delete)
+
 	server.Logger.Fatal(server.Start(":1337"))
 	// server.Logger.Fatal(server.StartTLS(":1337", "cert.pem", "privkey.pem"))
 }
