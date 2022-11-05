@@ -1,33 +1,19 @@
 package main
 
 import (
+	"crypto/sha256"
 	"fmt"
-	"strconv"
-
-	"github.com/jaavier/sider"
+	"time"
 )
 
-func getRetries(ip string) int {
-	value, _ := sider.Get(fmt.Sprintf("retries.%s", ip))
-	var intValue int = 0
-	if len(value) > 0 {
-		intValue, _ = strconv.Atoi(value)
-	}
-	return intValue
+func generateSha256(text string) string {
+	var f = sha256.New()
+	f.Write([]byte(text))
+	return fmt.Sprintf("%x", f.Sum(nil))
 }
 
-func isBanned(ip string) bool {
-	value, _ := sider.Get(fmt.Sprintf("banned.%s", ip))
-	return len(value) > 0
-}
-
-func checkLimit(ip string) bool {
-	limit := fmt.Sprintf("limit.%s", ip)
-	value, _ := sider.Get(limit)
-	if len(value) == 0 {
-		sider.Set(limit, "0")
-		return true
-	}
-	toInt, _ := strconv.Atoi(value)
-	return toInt < MAX_FREE
+func timestampToSha256() string {
+	var sha256Key = time.Now().UnixNano() + time.Now().UnixMicro()
+	var toText = fmt.Sprintf("%d", sha256Key)
+	return generateSha256(toText)
 }
